@@ -5,35 +5,7 @@ import { startStandaloneServer } from "@apollo/server/standalone";
 import db from "./_db.js";
 
 // types
-const typeDefs = `#graphql
-type Game {
-  id: ID!
-  title: String!
-  platform: [String!]!
-  reviews: [Review!]
-}
-type Review {
-  id: ID!
-  rating: Int!
-  content: String!
-  author: Author!
-  game: Game!
-}
-type Author {
-  id: ID!
-  name: String!
-  verified: Boolean!
-  reviews: [Review!]
-}
-type Query {
-  games: [Game]
-  game(id: ID!): Game
-  reviews: [Review]
-  review(id: ID!): Review
-  authors: [Author]
-  author(id: ID!): Author
-}
-`;
+import { typeDefs } from "./schema.js";
 
 const resolvers = {
   Query: {
@@ -45,9 +17,7 @@ const resolvers = {
     review: (_, args) => db.reviews.find((review) => review.id === args.id),
   },
   Game: {
-    reviews(parent) {
-      return db.reviews.filter((r) => r.game_id === parent.id);
-    },
+    reviews: (parent) => db.reviews.filter((r) => r.game_id === parent.id),
   },
   Review: {
     author(parent) {
@@ -60,6 +30,23 @@ const resolvers = {
   Author: {
     reviews(parent) {
       return db.reviews.filter((r) => r.author_id === parent.id);
+    },
+  },
+
+  Mutation: {
+    addGame(_, args) {
+      let game = {
+        ...args.game,
+        id: Math.floor(Math.random() * 10000).toString(),
+      };
+      db.games.push(game);
+      return game;
+    },
+    deleteGame(_, ID) {
+      let game = db.games.find((game) => game.id === ID);
+
+      db.games.pop(game);
+      return db.games;
     },
   },
 };
